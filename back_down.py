@@ -13,8 +13,9 @@ def audio_download(url_video_youtube: str, ydl_opts: dict):
 
         info_dict = ydl.extract_info(url_video_youtube, download=False)
         audio_time_line = info_dict.get("chapters", None)
+        new_name = info_dict.get("title", None) + ".mp3"
         print(f'{"-" * 50}\nDownload audio Successfully!\n{"-" * 50}')
-    return audio_time_line
+    return audio_time_line, new_name
 
 
 def audio_redactor(file_mp3_path, audio_path, time_line: list):
@@ -36,55 +37,55 @@ def audio_redactor(file_mp3_path, audio_path, time_line: list):
             extract.export(audio_path + f'\{file_name_to}.mp3', format="mp3")
             print(f'{"-" * 50}\n#{line["title"]} Created\n{"-" * 50}')
         except Exception as ex:
-            print(f"{'-' * 50}\n Произошла ошибка в файле {file_mp3_path}\n {ex} \n{'-' * 50}")
+            return "Ошибка", f"{'-' * 50}\n Произошла ошибка в файле {file_mp3_path}\n {ex} \n{'-' * 50}"
 
     os.remove(file_mp3_path)
-    print("Загрузка всех аудиофайлов успешно завершена 🎉🎉🎉")
+    return "Информация", "Загрузка всех аудиофайлов успешно завершена 🎉🎉🎉"
 
 
-def move_files(destination_folder, file_name):
+def move_files(destination_folder, file_name, new_name):
     source_folder = "."
+    os.rename(file_name, new_name)
 
-    source_path = os.path.join(source_folder, file_name)
-    destination_path = os.path.join(destination_folder, file_name)
+    source_path = os.path.join(source_folder, new_name)
+    destination_path = os.path.join(destination_folder, new_name)
 
     try:
         shutil.move(source_path, destination_path)
-        print(f"Файл успешно скачан в '{destination_folder}' 🎉")
+        return "Информация", f"Файл успешно скачан в '{destination_folder}' 🎉"
     except FileNotFoundError:
-        print(f"Ошибка: Файл или папка не найдены. ❌")
+        return "Ошибка", f"Ошибка: Файл или папка не найдены. ❌"
     except Exception as e:
-        print(f"Произошла ошибка: {e} ❌")
+        return "Ошибка", f"Произошла ошибка: {e} ❌"
 
 
-def main(ydl_opts):
+def main(ydl_opts, url, path_audio_files):
     file_name = "audioDownload.mp3"
 
-    url = input("Введите ссылку для скачивания видео ")
-    path_audio_files = input("Введите путь к папке для сохранения аудиофайлов ")
-
     if not os.path.exists(path_audio_files):
-        print("Указанный путь к папке для сохранения аудиофайлов не существует!")
-        return
+        return "Ошибка", "Указанный путь к папке для сохранения аудиофайлов не существует!"
 
-    audio_time_line = audio_download(url, ydl_opts)
+    audio_time_line, new_name = audio_download(url, ydl_opts)
 
     if audio_time_line:
-        audio_redactor(file_name, path_audio_files, audio_time_line)
+        message = audio_redactor(file_name, path_audio_files, audio_time_line)
     else:
-        move_files(path_audio_files, file_name)
+        message = move_files(path_audio_files, file_name, new_name)
+
+    return message
 
 
-if __name__ == "__main__":
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': 'audioDownload',
-        'noplaylist': True,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-    }
-
-    main(ydl_opts)
+# if __name__ == "__main__":
+#     ydl_opts = {
+#         'format': 'bestaudio/best',
+#         'outtmpl': 'audioDownload',
+#         'noplaylist': True,
+#         'postprocessors': [{
+#             'key': 'FFmpegExtractAudio',
+#             'preferredcodec': 'mp3',
+#             'preferredquality': '192',
+#         }],
+#     }
+#     url = input("Введите ссылку для скачивания видео ")
+#     path_audio_files = input("Введите путь к папке для сохранения аудиофайлов ")
+#     main(ydl_opts, url, path_audio_files)
