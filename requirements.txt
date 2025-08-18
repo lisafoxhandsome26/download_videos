@@ -1,2 +1,3 @@
 pydub
 yt-dlp
+pyinstaller
